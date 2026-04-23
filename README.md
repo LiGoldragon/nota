@@ -62,7 +62,7 @@ leader is camelCase.
 |---|---|
 | `42`, `-7`, `0xFF`, `0b1010`, `0o755`, `1_000_000` | Integer |
 | `3.14`, `-0.5` | Float (always `.` in canonical form) |
-| `[text]`, `[\| multiline \|]` | String |
+| `[text]`, `[\| multiline \|]`, or a bare identifier | String |
 | `true`, `false` | Bool |
 | `#<even-hex>` (e.g. `#a1b2c3`) | Bytes |
 | `#<64 hex chars>` | Blake3 hash (canonical length) |
@@ -70,6 +70,31 @@ leader is camelCase.
 Hex bytes are lowercase and even-length. No quoted-string form.
 No typed numeric suffixes (`42u32`) — the receiving type
 determines the value type.
+
+## Bare-identifier strings
+
+Where a string is expected by the schema, a bare identifier
+may be written in place of `[identifier]`. This keeps config
+files readable for the common case where string values follow
+identifier rules:
+
+```nota
+;; these three forms are equivalent when the schema says String
+(Package [nota-serde])
+(Package nota-serde)
+(Package [|nota-serde|])
+```
+
+A bare identifier qualifies when its content is a non-empty
+ident-class token (PascalCase / camelCase / kebab-case) and is
+*not* one of the reserved keywords `true`, `false`, `None` —
+those always mean the bool / Option::None they name.
+
+**Canonical form emits bare when eligible.** Serialising the
+string `"nota-serde"` through `to_string` produces `nota-serde`,
+not `[nota-serde]`. Strings containing spaces, `]`, newlines,
+digits as the first char, or reserved-word content always round-
+trip through the `[ ]` / `[| |]` forms.
 
 ## Path syntax
 
@@ -160,7 +185,7 @@ struct keys.)
   true
   42
   3.14
-  [hello]
+  hello
   [\|
     multi
     line
@@ -169,9 +194,12 @@ struct keys.)
   None
   Active
   <1 2 3>
-  <([name] [nota])>
+  <(name nota)>
   (Id 99))
 ```
+
+The string `hello` is bare (ident-shaped); `[hello]` is the same
+value.
 
 ### Comments
 

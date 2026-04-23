@@ -1,18 +1,19 @@
-;; example.nota — positional records covering every literal form.
+;; example.nota — positional records, bare idents where strings are
+;; expected and the content fits (kebab/camel/Pascal, non-reserved).
 
 (Project
-  [nota]
+  nota
   [0.1.0]
-  [\|
+  [|
     A text data format. Four delimiters, two sigils, no keywords.
     Records are positional; the Rust schema supplies field names.
-  \|]
-  <[ligoldragon]>
+  |]
+  <ligoldragon>
   <
-    (Dep [serde] [1] <[derive]>)
-    (Dep [thiserror] [2] <>)
+    (Dep serde [1] <derive>)
+    (Dep thiserror [2] <>)
   >
-  <([debug] true) ([strict] false)>
+  <(debug true) (strict false)>
   #cafebabe
   #e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
   Active)
