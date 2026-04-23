@@ -1,0 +1,18 @@
+;; example.nota — sample nota records covering every literal form.
+
+(Project
+  name=[nota]
+  version=[0.1.0]
+  description=[|
+    A text data format. Four delimiters, two sigils, no keywords.
+    The data-layer format of the sema ecosystem.
+  |]
+  authors=<[ligoldragon]>
+  dependencies=<
+    (Dep name=[serde] version=[1] features=<[derive]>)
+    (Dep name=[thiserror] version=[2] features=<>)
+  >
+  flags=<([debug] true) ([strict] false)>
+  magic=#cafebabe
+  fingerprint=#e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  status=Active)
