@@ -1,15 +1,15 @@
 # nota
 
 A text data format. Four delimiter pairs, two sigils, no
-keywords. Serializes typed structured values. The Rust
-implementation is
+keywords. Records are positional; field names live in the Rust
+schema, not in the text. The Rust implementation is
 [nota-serde](https://github.com/LiGoldragon/nota-serde).
 
 `nota` is the data-layer format in the sema ecosystem.
 [nexus](https://github.com/LiGoldragon/nexus) is the superset
 messaging protocol — every valid nota text is also valid nexus;
-nexus adds sigils and delimiter pairs for query / mutate / bind
-/ negate actions.
+nexus adds sigils, delimiters, and the `=` token for pattern /
+mutate / bind / negate / alias actions.
 
 This repo is spec-only. Grammar and examples below.
 
@@ -22,10 +22,10 @@ first-token-decidable at every choice point. No interior scanning.
 
 | Pair | Role | Example |
 |---|---|---|
-| `( )` | Record (named composite value) | `(Point horizontal=3.0 vertical=4.0)` |
+| `( )` | Record (named composite value) | `(Point 3.0 4.0)` |
 | `[ ]` | String (inline) | `[hello world]` |
 | `[\| \|]` | String (multiline, auto-dedented) | `[\| line one / line two \|]` |
-| `< >` | Sequence / tuple (heterogeneous) | `<1 2 3>`, `<(k v) (k2 v2)>` |
+| `< >` | Sequence (heterogeneous) | `<1 2 3>`, `<([k] v) ([k2] v2)>` |
 
 Strings are delimiter-bounded, not quote-bounded. No `"..."`.
 
@@ -40,13 +40,15 @@ Two. Each has a fixed lexical position — no interior scanning.
 
 ## Identifiers
 
-Three lexer classes, distinguished by first character:
+Three lexer classes, distinguished by first character. `_` is
+treated as a letter in all classes (continue position; not a
+valid leading character on its own for kebab).
 
 | Class | Shape | Role |
 |---|---|---|
 | PascalCase | First char uppercase | Type / variant names (structural) |
-| camelCase | First char lowercase, no hyphens | Field names, instance names |
-| kebab-case | Lowercase, with `-` | Titles, hash-IDs, tags |
+| camelCase | First char lowercase (not `-`), `_` allowed | Field names (in schema), instance names |
+| kebab-case | Lowercase with `-`, `_` allowed | Titles, hash-IDs, tags |
 
 The parser dispatches on class. Classes are disjoint — no
 identifier is valid in more than one class.
@@ -78,23 +80,54 @@ example:item
 
 ## Records
 
-A record is a named composite with positional name followed by
-named fields:
+A record is a named composite value. The first token is a
+PascalCase type name; the rest are the fields, **in
+source-declaration order from the Rust schema**. No field names
+appear in the text — positions determine field identity.
 
 ```nota
-(TypeName field1=value1 field2=value2)
+(Point 3.0 4.0)
 ```
 
-Named fields use `=`. Positional variants (tuple structs, tuple
-variants, enum variants carrying unnamed data) use whitespace:
+Where `Point` is defined `struct Point { horizontal: f64, vertical: f64 }`,
+position 1 is `horizontal`, position 2 is `vertical`.
+
+### Nested records
 
 ```nota
-(TupleVariant value1 value2)
+(Line
+  (Point 0.0 0.0)
+  (Point 10.0 10.0))
 ```
+
+### Newtype structs
+
+Rust single-field unnamed structs (`struct Id(u32)`) are allowed
+and serialize *wrapped*, with one positional value:
+
+```nota
+(Id 42)
+```
+
+Not transparently — `(Id 42)` is the canonical form, not bare
+`42`. This preserves structural integrity across the wire.
+
+### Multi-field unnamed structs are forbidden
+
+`struct Pair(i32, i32)` (tuple struct with more than one field)
+has no field names in the schema — position cannot be mapped to
+meaning. nota rejects this at serialize time. Use a named-field
+struct instead.
+
+Single-field enum variants (`Square(f64)`) are allowed and treated
+like newtypes: `(Square 5.0)`. Multi-field tuple variants are
+forbidden for the same reason as multi-field tuple structs.
 
 ## Sequences
 
-Heterogeneous allowed. Serves both `Vec<T>` and tuples:
+Heterogeneous values. Serves `Vec<T>`, `&[T]`, tuples of any
+length, and tuple variants carrying multiple values. (The latter
+also appears inside records.)
 
 ```nota
 <1 2 3>
@@ -109,47 +142,32 @@ A sequence of `(key value)` pairs:
 <([host] [localhost]) ([port] 8080)>
 ```
 
-Canonical form sorts entries by serialized key bytes.
+Canonical form sorts entries by serialized key bytes. (Note:
+"sorted by bytes" is deterministic but not arithmetic —
+`(IntKey 10)` sorts before `(IntKey 2)` because `"1"` < `"2"`
+lexicographically. Fine for string keys; use with care for
+struct keys.)
 
 ## Examples
 
-### A record with a nested record field
+### A record containing every literal form
 
 ```nota
-(Line
-  start=(Point horizontal=0.0 vertical=0.0)
-  end=(Point horizontal=10.0 vertical=10.0))
-```
-
-### An enum variant
-
-```nota
-Fire
-```
-
-(bare PascalCase name — a unit variant in the receiving type)
-
-### Strings
-
-```nota
-(Greeting message=[hello, world])
-
-(Document body=[\|
-  first line
-  second line
-\|])
-```
-
-### Bytes
-
-```nota
-(Frame data=#a1b2c3d4)
-```
-
-### Blake3 hash
-
-```nota
-(Ref target=#e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855)
+(Sample
+  true
+  42
+  3.14
+  [hello]
+  [\|
+    multi
+    line
+  \|]
+  #a1b2c3
+  None
+  Active
+  <1 2 3>
+  <([name] [nota])>
+  (Id 99))
 ```
 
 ### Comments
@@ -157,8 +175,9 @@ Fire
 ```nota
 (Point
   ;; horizontal coordinate
-  horizontal=3.0
-  vertical=4.0)
+  3.0
+  ;; vertical coordinate
+  4.0)
 ```
 
 ## Canonical form
@@ -180,22 +199,28 @@ rules.
 
 ## Forbidden constructs
 
-These are explicitly *not* part of nota. Using them is a syntax
-error:
+These are *not* part of nota. Using them is a syntax error:
 
 - Unit type (serde's `()`). Use a named variant (`Nil`, `None`)
   where absent-value semantics are needed.
 - `null` keyword. Use `None` (PascalCase).
 - Quoted strings (`"..."`, `'...'`). Use `[ ]` / `[\| \|]`.
-- Sigils `~`, `@`, `!` — reserved for the [nexus](https://github.com/LiGoldragon/nexus)
-  messaging layer, not valid in pure nota.
+- Field-assignment `=` inside records. Records are positional.
+  The `=` token itself is reserved and appears only in nexus
+  (for bind aliasing).
+- Sigils `~`, `@`, `!` — reserved for the
+  [nexus](https://github.com/LiGoldragon/nexus) messaging layer,
+  not valid in pure nota.
 - Delimiter pairs `(\| \|)`, `{ }`, `{\| \|}` — also nexus-only.
+- Multi-field unnamed structs (`struct Pair(i32, i32)`). Use
+  named fields.
 
 ## Implementation
 
 [nota-serde](https://github.com/LiGoldragon/nota-serde) implements
 `serde::Serializer` and `serde::Deserializer`. Any type
-implementing serde's `Serialize` + `Deserialize` can round-trip
+implementing serde's `Serialize` + `Deserialize` (with the
+constraint above on unnamed multi-field structs) can round-trip
 through nota text:
 
 ```rust
