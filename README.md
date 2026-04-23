@@ -41,17 +41,20 @@ Two. Each has a fixed lexical position — no interior scanning.
 ## Identifiers
 
 Three lexer classes, distinguished by first character. `_` is
-treated as a letter in all classes (continue position; not a
-valid leading character on its own for kebab).
+treated as a letter in all classes, including as a leading
+character — `_foo` counts as camelCase-kindred (the conventional
+class for Rust field names starting with `_`).
 
 | Class | Shape | Role |
 |---|---|---|
 | PascalCase | First char uppercase | Type / variant names (structural) |
-| camelCase | First char lowercase (not `-`), `_` allowed | Field names (in schema), instance names |
-| kebab-case | Lowercase with `-`, `_` allowed | Titles, hash-IDs, tags |
+| camelCase | First char lowercase or `_`; alnum / `_` body (no `-`) | Field names (in schema), instance names |
+| kebab-case | First char lowercase or `_`; alnum / `_` / `-` body, at least one `-` | Titles, hash-IDs, tags |
 
 The parser dispatches on class. Classes are disjoint — no
-identifier is valid in more than one class.
+identifier is valid in more than one class. The presence of a
+`-` distinguishes kebab from camel; otherwise a lowercase-or-`_`
+leader is camelCase.
 
 ## Literals
 
@@ -214,6 +217,22 @@ These are *not* part of nota. Using them is a syntax error:
 - Delimiter pairs `(\| \|)`, `{ }`, `{\| \|}` — also nexus-only.
 - Multi-field unnamed structs (`struct Pair(i32, i32)`). Use
   named fields.
+- `#[serde(flatten)]` on a struct field. Flattening requires
+  map semantics (key-based field routing); positional records
+  have no such routing. A flattened field currently serialises
+  through the map path and emits `<(k v) …>` instead of a
+  `(Name …)` record — not what you want. Prefer composition:
+  keep the nested struct visible as a positional field.
+
+## Canonical-form assumptions
+
+Canonical form assumes `Serialize` is injective on distinct
+values — that two different values never produce identical
+serialised bytes. Derived `Serialize` is injective over the
+visible fields by construction. A hand-rolled `Serialize` that
+drops or lossily encodes data breaks this assumption, which in
+turn makes map-key sort order undefined between keys that
+collide.
 
 ## Implementation
 
