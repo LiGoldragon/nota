@@ -90,6 +90,15 @@ ident-class token (PascalCase / camelCase / kebab-case) and is
 *not* one of the reserved keywords `true`, `false`, `None` —
 those always mean the bool / Option::None they name.
 
+Bare form is **ASCII-only**. Non-ASCII content (e.g. `café`,
+emoji, RTL text) always emits through `[ ]` or `[| |]`. The
+path separator `:` never appears in a bare string — use `[...]`
+for content containing colons.
+
+Single-character strings and `char` values follow the same rule:
+`'a'` emits as bare `a`; both bare and bracketed forms deserialize
+back to `char`.
+
 **Canonical form emits bare when eligible.** Serialising the
 string `"nota-serde"` through `to_string` produces `nota-serde`,
 not `[nota-serde]`. Strings containing spaces, `]`, newlines,
@@ -219,8 +228,10 @@ For stable hashing (e.g. content-addressing):
 - **Map entries**: sorted by serialized key bytes.
 - **Integers**: decimal, no separators, minimum digits.
 - **Floats**: shortest round-trip; `.` always present.
-- **Strings**: inline `[...]` unless content contains `]` or a
-  newline, otherwise `[\| \|]`.
+- **Strings**: bare when content is a non-empty ASCII ident
+  (non-reserved — not `true`, `false`, `None`); otherwise inline
+  `[...]` unless content contains `]` or a newline; otherwise
+  `[\| \|]`.
 - **Bytes**: lowercase hex, no separator, `#` prefix.
 - **Whitespace**: single space within one expression; newline
   between top-level items; no indentation.
