@@ -11,8 +11,8 @@ This repo is **spec-only**. The grammar lives in
 
 ## Role in the sema-ecosystem
 
-Layer 0 of the project (per [mentci-next/docs/architecture.md
-§8](https://github.com/LiGoldragon/mentci-next/blob/main/docs/architecture.md)).
+Layer 0 of the project (per [criome/ARCHITECTURE.md
+§8](https://github.com/LiGoldragon/criome/blob/main/ARCHITECTURE.md)).
 The kernel that
 [nota-serde-core](https://github.com/LiGoldragon/nota-serde-core)
 implements; the foundation that
