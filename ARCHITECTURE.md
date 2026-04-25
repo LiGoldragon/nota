@@ -20,8 +20,9 @@ implements; the foundation that
 
 ## What this repo defines
 
-- The token shape (Pascal-named records, `:keyword` syntax,
-  `@bind` syntax, literal forms, sigil reservation).
+- The token shape (Pascal-named records, positional fields, `:`
+  as the path separator (`Char:Upper:A`), literal forms, the
+  reserved-sigil set that downstream dialects can claim).
 - The parsing discipline (delimiter balancing, comment forms,
   whitespace handling).
 - The dialect-extensibility points where downstream grammars
@@ -29,10 +30,10 @@ implements; the foundation that
 
 ## What this repo does not define
 
-- The delimiter-family matrix (lives in
+- The full delimiter-family matrix (lives in
   [nexus](https://github.com/LiGoldragon/nexus)).
-- Edit / query semantics (live in nexus + criomed).
-- Records (live in [nexus-schema](https://github.com/LiGoldragon/nexus-schema)).
+- Edit / query semantics (live in nexus + criome).
+- Record kinds (live in [signal](https://github.com/LiGoldragon/signal)).
 
 ## Status
 
