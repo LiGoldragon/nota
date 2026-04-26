@@ -1,33 +1,41 @@
 # nota
 
-A text data format. Four delimiter pairs, two sigils, no
-keywords. Records are positional; field names live in the Rust
-schema, not in the text. The Rust implementation is
+A text data format. Two delimiter pairs, two string forms, two
+sigils, no keywords. Records are positional; field names live
+in the Rust schema, not the text. The Rust implementation is
 [nota-serde](https://github.com/LiGoldragon/nota-serde).
 
 `nota` is the data-layer format in the sema ecosystem.
 [nexus](https://github.com/LiGoldragon/nexus) is the superset
-messaging protocol — every valid nota text is also valid nexus;
-nexus adds sigils, delimiters, and the `=` token for pattern /
-mutate / bind / negate / alias actions.
+messaging protocol — every valid nota text is also valid nexus.
 
-This repo is spec-only. Grammar and examples below.
+This repo is spec-only.
 
 ---
 
 ## Delimiters
 
-Four pairs. Role is fixed at the opening token — the grammar is
+Two pairs. Role is fixed at the opening token — the grammar is
 first-token-decidable at every choice point. No interior scanning.
 
 | Pair | Role | Example |
 |---|---|---|
 | `( )` | Record (named composite value) | `(Point 3.0 4.0)` |
-| `[ ]` | String (inline) | `[hello world]` |
-| `[\| \|]` | String (multiline, auto-dedented) | `[\| line one / line two \|]` |
-| `< >` | Sequence (heterogeneous) | `<1 2 3>`, `<([k] v) ([k2] v2)>` |
+| `[ ]` | Sequence (heterogeneous list) | `[1 2 3]`, `[("k" v) ("k2" v2)]` |
 
-Strings are delimiter-bounded, not quote-bounded. No `"..."`.
+## Strings
+
+Two forms. Quote-bounded.
+
+| Form | Role | Example |
+|---|---|---|
+| `" "` | String (inline) | `"hello world"` |
+| `""" """` | String (multiline, auto-dedented) | `"""line one\nline two"""` |
+
+Inline strings allow `\"`, `\\`, `\n`, `\t` escapes. Multiline
+strings take their content verbatim — escapes pass through
+unchanged. Dedent strips the shortest common leading-whitespace
+prefix from every non-empty line.
 
 ## Sigils
 
@@ -62,27 +70,27 @@ leader is camelCase.
 |---|---|
 | `42`, `-7`, `0xFF`, `0b1010`, `0o755`, `1_000_000` | Integer |
 | `3.14`, `-0.5` | Float (always `.` in canonical form) |
-| `[text]`, `[\| multiline \|]`, or a bare identifier | String |
+| `"text"`, `"""multiline"""`, or a bare identifier | String |
 | `true`, `false` | Bool |
 | `#<even-hex>` (e.g. `#a1b2c3`) | Bytes |
 | `#<64 hex chars>` | Blake3 hash (canonical length) |
 
-Hex bytes are lowercase and even-length. No quoted-string form.
-No typed numeric suffixes (`42u32`) — the receiving type
-determines the value type.
+Hex bytes are lowercase and even-length. No typed numeric
+suffixes (`42u32`) — the receiving type determines the value
+type.
 
 ## Bare-identifier strings
 
 Where a string is expected by the schema, a bare identifier
-may be written in place of `[identifier]`. This keeps config
+may be written in place of `"identifier"`. This keeps config
 files readable for the common case where string values follow
 identifier rules:
 
 ```nota
 ;; these three forms are equivalent when the schema says String
-(Package [nota-serde])
+(Package "nota-serde")
 (Package nota-serde)
-(Package [|nota-serde|])
+(Package """nota-serde""")
 ```
 
 A bare identifier qualifies when its content is a non-empty
@@ -91,19 +99,19 @@ ident-class token (PascalCase / camelCase / kebab-case) and is
 those always mean the bool / Option::None they name.
 
 Bare form is **ASCII-only**. Non-ASCII content (e.g. `café`,
-emoji, RTL text) always emits through `[ ]` or `[| |]`. The
-path separator `:` never appears in a bare string — use `[...]`
+emoji, RTL text) always emits through `" "` or `""" """`. The
+path separator `:` never appears in a bare string — use `" "`
 for content containing colons.
 
 Single-character strings and `char` values follow the same rule:
-`'a'` emits as bare `a`; both bare and bracketed forms deserialize
+`'a'` emits as bare `a`; both bare and quoted forms deserialize
 back to `char`.
 
 **Canonical form emits bare when eligible.** Serialising the
 string `"nota-serde"` through `to_string` produces `nota-serde`,
-not `[nota-serde]`. Strings containing spaces, `]`, newlines,
+not `"nota-serde"`. Strings containing spaces, `"`, newlines,
 digits as the first char, or reserved-word content always round-
-trip through the `[ ]` / `[| |]` forms.
+trip through the `" "` / `""" """` forms.
 
 ## Path syntax
 
@@ -163,27 +171,38 @@ forbidden for the same reason as multi-field tuple structs.
 ## Sequences
 
 Heterogeneous values. Serves `Vec<T>`, `&[T]`, tuples of any
-length, and tuple variants carrying multiple values. (The latter
-also appears inside records.)
+length, and tuple variants carrying multiple values.
 
 ```nota
-<1 2 3>
-<[hello] 42 true>
+[1 2 3]
+["hello" 42 true]
 ```
+
+Empty sequence: `[]`.
 
 ## Maps
 
 A sequence of `(key value)` pairs:
 
 ```nota
-<([host] [localhost]) ([port] 8080)>
+[("host" "localhost") ("port" 8080)]
 ```
 
-Canonical form sorts entries by serialized key bytes. (Note:
-"sorted by bytes" is deterministic but not arithmetic —
-`(IntKey 10)` sorts before `(IntKey 2)` because `"1"` < `"2"`
-lexicographically. Fine for string keys; use with care for
-struct keys.)
+Canonical form sorts entries by serialized key bytes.
+
+## Reserved tokens
+
+These tokens have meaning only in [nexus](https://github.com/LiGoldragon/nexus)
+(the messaging superset) and are syntax errors in pure nota:
+
+- Sigils `~` `@` `!` `?` `*` — verb sigils for messaging actions.
+- Delimiter pairs `(| |)` `[| |]` `{ }` `{| |}` — pattern,
+  atomic batch, shape, constrain.
+- Single-character `=` between non-bind tokens. (In nexus, `=`
+  appears only between two `@bind` names for aliasing.)
+- `<` `>` `<=` `>=` `!=` — reserved for comparison operators in
+  nexus pattern positions. (Comparison-operator design is
+  deferred; the tokens are reserved.)
 
 ## Examples
 
@@ -195,19 +214,19 @@ struct keys.)
   42
   3.14
   hello
-  [\|
-    multi
-    line
-  \|]
+  """
+  multi
+  line
+  """
   #a1b2c3
   None
   Active
-  <1 2 3>
-  <(name nota)>
+  [1 2 3]
+  [("name" nota)]
   (Id 99))
 ```
 
-The string `hello` is bare (ident-shaped); `[hello]` is the same
+The string `hello` is bare (ident-shaped); `"hello"` is the same
 value.
 
 ### Comments
@@ -230,8 +249,8 @@ For stable hashing (e.g. content-addressing):
 - **Floats**: shortest round-trip; `.` always present.
 - **Strings**: bare when content is a non-empty ASCII ident
   (non-reserved — not `true`, `false`, `None`); otherwise inline
-  `[...]` unless content contains `]` or a newline; otherwise
-  `[\| \|]`.
+  `"..."` unless content contains `"` or a newline; otherwise
+  `""" """`.
 - **Bytes**: lowercase hex, no separator, `#` prefix.
 - **Whitespace**: single space within one expression; newline
   between top-level items; no indentation.
@@ -246,32 +265,13 @@ These are *not* part of nota. Using them is a syntax error:
 - Unit type (serde's `()`). Use a named variant (`Nil`, `None`)
   where absent-value semantics are needed.
 - `null` keyword. Use `None` (PascalCase).
-- Quoted strings (`"..."`, `'...'`). Use `[ ]` / `[\| \|]`.
 - Field-assignment `=` inside records. Records are positional.
-  The `=` token itself is reserved and appears only in nexus
-  (for bind aliasing).
-- Sigils `~`, `@`, `!` — reserved for the
-  [nexus](https://github.com/LiGoldragon/nexus) messaging layer,
-  not valid in pure nota.
-- Delimiter pairs `(\| \|)`, `{ }`, `{\| \|}` — also nexus-only.
 - Multi-field unnamed structs (`struct Pair(i32, i32)`). Use
   named fields.
 - `#[serde(flatten)]` on a struct field. Flattening requires
   map semantics (key-based field routing); positional records
-  have no such routing. A flattened field currently serialises
-  through the map path and emits `<(k v) …>` instead of a
-  `(Name …)` record — not what you want. Prefer composition:
-  keep the nested struct visible as a positional field.
-
-## Canonical-form assumptions
-
-Canonical form assumes `Serialize` is injective on distinct
-values — that two different values never produce identical
-serialised bytes. Derived `Serialize` is injective over the
-visible fields by construction. A hand-rolled `Serialize` that
-drops or lossily encodes data breaks this assumption, which in
-turn makes map-key sort order undefined between keys that
-collide.
+  have no such routing. Prefer composition: keep the nested
+  struct visible as a positional field.
 
 ## Implementation
 
@@ -291,7 +291,7 @@ let text = nota_serde::to_string(&value)?;
 ```
 nota/
   README.md       ;; this file — grammar spec
-  example.nota   ;; example records
+  example.nota    ;; example records
   flake.nix       ;; dev-shell
   LICENSE.md
 ```
