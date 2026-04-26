@@ -81,6 +81,19 @@ identifier is valid in more than one class. The presence of a
 `-` distinguishes kebab from camel; otherwise a lowercase-or-`_`
 leader is camelCase.
 
+**The PascalCase rule is enforced at parse time** in record /
+unit struct / newtype / variant *head* positions — the
+identifier immediately after `(` in `(Foo …)`, the bare token
+of a unit `Foo`, or the variant name. A bare lowercase
+identifier in head position is rejected with a "name must be
+PascalCase" error rather than failing later as a schema-mismatch.
+
+The rule applies to head positions only. In *value* positions,
+every ident-class token (PascalCase, camelCase, kebab-case)
+remains a valid bare-identifier string when the schema expects
+`String` — `(Tag User)`, `(Person nexus)`, `(Tag lojix-schema)`
+all work.
+
 ## Literals
 
 | Form | Type |
