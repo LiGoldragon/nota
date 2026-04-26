@@ -46,6 +46,13 @@ Two. Each has a fixed lexical position — no interior scanning.
 | `;;` | Line comment | to end of line |
 | `#` | Byte-literal prefix | `#a1b2c3` (3 bytes) |
 
+**Comments carry no load-bearing data.** The parser discards them.
+Information that must be communicated has a typed home in the
+schema — never use comments, whitespace, ordering accidents, or
+any other parser-discarded channel to carry meaning. If a design
+wants to "put it in a comment for the reader to find," the design
+is missing a field; fix the design.
+
 ## Identifiers
 
 Three lexer classes, distinguished by first character. `_` is
