@@ -5,9 +5,9 @@
   nota
   "0.1.0"
   """
-  A text data format. Two delimiters, two string forms, two
-  sigils, no keywords. Records are positional; the Rust schema
-  supplies field names.
+    A text data format. Two delimiters, two string forms, two
+    sigils, no keywords. Records are positional; the Rust schema
+    supplies field names.
   """
   [ligoldragon]
   [
