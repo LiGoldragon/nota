@@ -1,9 +1,19 @@
 # nota
 
 A text data format. Two delimiter pairs, two string forms, two
-sigils, no keywords. Records are positional; field names live
-in the Rust schema, not the text. The Rust implementation is
+sigils, no parser keywords beyond the literals `true` / `false`
+/ `None`. Records are positional; field names live in the Rust
+schema, not the text. The Rust implementation is
 [nota-serde](https://github.com/LiGoldragon/nota-serde).
+
+The "no keywords" rule applies to the **parser** — there are no
+reserved words like `SELECT` or `IF` that the parser dispatches
+on. **Schemas are typed by the consumer**: kind names, enum
+variants (e.g. `RelationKind { DependsOn, Contains, … }`), and
+field types are part of the schema, not the parser. Adding new
+typed kinds and variants is exactly what consumers like
+[signal](https://github.com/LiGoldragon/signal) do; the parser
+stays small.
 
 `nota` is the data-layer format in the sema ecosystem.
 [nexus](https://github.com/LiGoldragon/nexus) is the superset
