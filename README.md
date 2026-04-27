@@ -178,14 +178,43 @@ position 1 is `horizontal`, position 2 is `vertical`.
 ### Newtype structs
 
 Rust single-field unnamed structs (`struct Id(u32)`) are allowed
-and serialize *wrapped*, with one positional value:
+and serialize *wrapped* by default, with one positional value:
 
 ```nota
 (Id 42)
 ```
 
-Not transparently — `(Id 42)` is the canonical form, not bare
-`42`. This preserves structural integrity across the wire.
+The wrapped form preserves the type marker on the wire — useful
+for newtypes whose appearance in text shouldn't be confused with
+the underlying primitive.
+
+**Newtypes of primitives may opt into a bare form** with serde's
+`#[serde(transparent)]` attribute. The inner value emits bare,
+and bare integer (or string, etc.) literals in matching schema
+positions are accepted as the newtype:
+
+```rust
+#[serde(transparent)]
+pub struct Slot(pub u64);
+```
+
+```nota
+;; with transparent: bare integer in slot positions
+(Edge 100 101 Flow)
+;; without transparent the same record would read:
+(Edge (Slot 100) (Slot 101) Flow)
+```
+
+This is the same schema-position-determines-type discipline as
+bare-identifier strings (above): when the schema expects `Slot`
+at a position, the parser accepts a bare `42` and constructs
+`Slot(42)`; the serializer emits `42` for canonical output. Use
+`#[serde(transparent)]` for primitive-shaped newtypes that
+appear in heavily-used positions where wrapping hurts
+readability — `Slot`, `Revision`, and content-hash types are the
+canonical cases. Domain newtypes whose type marker carries
+meaning to a human reader (e.g. `EmailAddress(String)`,
+`Url(String)`) should stay wrapped.
 
 ### Multi-field unnamed structs are forbidden
 
