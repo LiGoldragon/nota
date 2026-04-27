@@ -4,7 +4,7 @@ A text data format. Two delimiter pairs, two string forms, two
 sigils, no parser keywords beyond the literals `true` / `false`
 / `None`. Records are positional; field names live in the Rust
 schema, not the text. The Rust implementation is
-[nota-serde](https://github.com/LiGoldragon/nota-serde).
+[nota-codec](https://github.com/LiGoldragon/nota-codec).
 
 The "no keywords" rule applies to the **parser** — there are no
 reserved words like `SELECT` or `IF` that the parser dispatches
@@ -138,10 +138,28 @@ Single-character strings and `char` values follow the same rule:
 back to `char`.
 
 **Canonical form emits bare when eligible.** Serialising the
-string `"nota-serde"` through `to_string` produces `nota-serde`,
-not `"nota-serde"`. Strings containing spaces, `"`, newlines,
+string `"nota-codec"` through `Encoder` produces `nota-codec`,
+not `"nota-codec"`. Strings containing spaces, `"`, newlines,
 digits as the first char, or reserved-word content always round-
 trip through the `" "` / `""" """` forms.
+
+> **Implementation note (2026-04-27):** the current
+> [nota-codec](https://github.com/LiGoldragon/nota-codec)
+> `Decoder::read_string` accepts both quoted and bare-ident
+> input; the `Encoder::write_string` always emits the quoted
+> form. The aspirational bare-emit-when-eligible behavior is a
+> later enhancement.
+
+### A clarification on bracketed bare idents
+
+A wire fragment like `[ligoldragon]` is **always** parsed as a
+`Vec<String>` with one element (a single-element sequence
+where the element is the bare-ident-as-string `ligoldragon`).
+There is **no** "bare-bracketed string" third string form —
+the brackets *always* mean sequence; if the schema position
+expects a `String`, write the bare ident without brackets:
+`(Author ligoldragon)`. If the schema expects `Vec<String>`,
+the brackets group: `(Authors [ligoldragon other-author])`.
 
 ## Path syntax
 
