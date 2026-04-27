@@ -352,15 +352,21 @@ These are *not* part of nota. Using them is a syntax error:
 
 ## Implementation
 
-[nota-serde](https://github.com/LiGoldragon/nota-serde) implements
-`serde::Serializer` and `serde::Deserializer`. Any type
-implementing serde's `Serialize` + `Deserialize` (with the
-constraint above on unnamed multi-field structs) can round-trip
-through nota text:
+[nota-codec](https://github.com/LiGoldragon/nota-codec) provides
+the typed `Decoder` + `Encoder` runtime; [nota-derive](https://github.com/LiGoldragon/nota-derive)
+provides six proc-macro derives (`NotaRecord`, `NotaEnum`,
+`NotaTransparent`, `NotaTryTransparent`, `NexusPattern`,
+`NexusVerb`) that emit `NotaEncode` / `NotaDecode` impls.
 
 ```rust
-let value: MyType = nota_serde::from_str(text)?;
-let text = nota_serde::to_string(&value)?;
+use nota_codec::{Decoder, Encoder, NotaDecode, NotaEncode};
+
+let mut decoder = Decoder::nota(text);
+let value = MyType::decode(&mut decoder)?;
+
+let mut encoder = Encoder::nota();
+value.encode(&mut encoder)?;
+let text = encoder.into_string();
 ```
 
 ## Repo layout

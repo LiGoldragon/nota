@@ -13,9 +13,9 @@ This repo is **spec-only**. The grammar lives in
 
 Layer 0 of the project (per [criome/ARCHITECTURE.md
 §8](https://github.com/LiGoldragon/criome/blob/main/ARCHITECTURE.md)).
-The kernel that
-[nota-serde-core](https://github.com/LiGoldragon/nota-serde-core)
-implements; the foundation that
+The kernel that [nota-codec](https://github.com/LiGoldragon/nota-codec)
++ [nota-derive](https://github.com/LiGoldragon/nota-derive)
+implement; the foundation that
 [nexus](https://github.com/LiGoldragon/nexus)'s grammar refines.
 
 ## What this repo defines
@@ -38,5 +38,5 @@ implements; the foundation that
 ## Status
 
 **Spec, stable.** Changes are coordinated with
-[nota-serde-core](https://github.com/LiGoldragon/nota-serde-core)
-to keep the parser kernel in sync.
+[nota-codec](https://github.com/LiGoldragon/nota-codec) to keep
+the parser kernel in sync.
