@@ -118,9 +118,9 @@ identifier rules:
 
 ```nota
 ;; these three forms are equivalent when the schema says String
-(Package "nota-serde")
-(Package nota-serde)
-(Package """nota-serde""")
+(Package "nota-codec")
+(Package nota-codec)
+(Package """nota-codec""")
 ```
 
 A bare identifier qualifies when its content is a non-empty
