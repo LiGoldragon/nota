@@ -91,7 +91,7 @@ PascalCase" error rather than failing later as a schema-mismatch.
 The rule applies to head positions only. In *value* positions,
 every ident-class token (PascalCase, camelCase, kebab-case)
 remains a valid bare-identifier string when the schema expects
-`String` — `(Tag User)`, `(Person nexus)`, `(Tag lojix-schema)`
+`String` — `(Tag User)`, `(Person nexus)`, `(Tag flow-graph)`
 all work.
 
 ## Literals
