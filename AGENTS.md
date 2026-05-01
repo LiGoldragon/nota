@@ -6,9 +6,9 @@ You **MUST** read AGENTS.md at `github:ligoldragon/lore` — the workspace contr
 
 Spec-only repo. The text grammar at the bottom of the language stack — the **family of grammars** (tokeniser shape + parsing discipline) that nexus and other dialects extend.
 
-The grammar lives in [README.md](README.md); an example file is [`example.nota`](example.nota).
+The grammar lives in `README.md`; an example file is [`example.nota`](example.nota).
 
-[nota-codec](https://github.com/LiGoldragon/nota-codec) implements decode/encode against this spec; [nota-derive](https://github.com/LiGoldragon/nota-derive) provides the proc-macro derives.
+nota-codec implements decode/encode against this spec; nota-derive provides the proc-macro derives.
 
 ---
 

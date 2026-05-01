@@ -4,7 +4,7 @@ A text data format. Two delimiter pairs, two string forms, two
 sigils, no parser keywords beyond the literals `true` / `false`
 / `None`. Records are positional; field names live in the Rust
 schema, not the text. The Rust implementation is
-[nota-codec](https://github.com/LiGoldragon/nota-codec).
+nota-codec.
 
 The "no keywords" rule applies to the **parser** — there are no
 reserved words like `SELECT` or `IF` that the parser dispatches
@@ -12,11 +12,11 @@ on. **Schemas are typed by the consumer**: kind names, enum
 variants (e.g. `RelationKind { DependsOn, Contains, … }`), and
 field types are part of the schema, not the parser. Adding new
 typed kinds and variants is exactly what consumers like
-[signal](https://github.com/LiGoldragon/signal) do; the parser
+signal do; the parser
 stays small.
 
 `nota` is the data-layer format in the sema ecosystem.
-[nexus](https://github.com/LiGoldragon/nexus) is the superset
+nexus is the superset
 messaging protocol — every valid nota text is also valid nexus.
 
 This repo is spec-only.
@@ -144,7 +144,7 @@ digits as the first char, or reserved-word content always round-
 trip through the `" "` / `""" """` forms.
 
 > **Implementation note (2026-04-27):** the current
-> [nota-codec](https://github.com/LiGoldragon/nota-codec)
+> nota-codec
 > `Decoder::read_string` accepts both quoted and bare-ident
 > input; the `Encoder::write_string` always emits the quoted
 > form. The aspirational bare-emit-when-eligible behavior is a
@@ -269,7 +269,7 @@ Canonical form sorts entries by serialized key bytes.
 
 ## Reserved tokens
 
-These tokens have meaning only in [nexus](https://github.com/LiGoldragon/nexus)
+These tokens have meaning only in nexus
 (the messaging superset) and are syntax errors in pure nota:
 
 - Sigils `~` `@` `!` `?` `*` — verb sigils for messaging actions.
@@ -352,8 +352,8 @@ These are *not* part of nota. Using them is a syntax error:
 
 ## Implementation
 
-[nota-codec](https://github.com/LiGoldragon/nota-codec) provides
-the typed `Decoder` + `Encoder` runtime; [nota-derive](https://github.com/LiGoldragon/nota-derive)
+nota-codec provides
+the typed `Decoder` + `Encoder` runtime; nota-derive
 provides six proc-macro derives (`NotaRecord`, `NotaEnum`,
 `NotaTransparent`, `NotaTryTransparent`, `NexusPattern`,
 `NexusVerb`) that emit `NotaEncode` / `NotaDecode` impls.

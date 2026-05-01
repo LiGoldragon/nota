@@ -6,17 +6,17 @@ identifiers, literals, sigils) and a parsing discipline that
 nexus and other dialects extend.
 
 This repo is **spec-only**. The grammar lives in
-[README.md](README.md); an example file is
+`README.md`; an example file is
 [`example.nota`](example.nota). No Rust code.
 
 ## Role in the sema-ecosystem
 
-Layer 0 of the project (per [criome/ARCHITECTURE.md
-§8](https://github.com/LiGoldragon/criome/blob/main/ARCHITECTURE.md)).
-The kernel that [nota-codec](https://github.com/LiGoldragon/nota-codec)
-+ [nota-derive](https://github.com/LiGoldragon/nota-derive)
+Layer 0 of the project (per criome/ARCHITECTURE.md
+§8).
+The kernel that nota-codec
++ nota-derive
 implement; the foundation that
-[nexus](https://github.com/LiGoldragon/nexus)'s grammar refines.
+nexus's grammar refines.
 
 ## What this repo defines
 
@@ -31,12 +31,12 @@ implement; the foundation that
 ## What this repo does not define
 
 - The full delimiter-family matrix (lives in
-  [nexus](https://github.com/LiGoldragon/nexus)).
+  nexus).
 - Edit / query semantics (live in nexus + criome).
-- Record kinds (live in [signal](https://github.com/LiGoldragon/signal)).
+- Record kinds (live in signal).
 
 ## Status
 
 **Spec, stable.** Changes are coordinated with
-[nota-codec](https://github.com/LiGoldragon/nota-codec) to keep
+nota-codec to keep
 the parser kernel in sync.
