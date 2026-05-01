@@ -7,7 +7,7 @@ nexus and other dialects extend.
 
 This repo is **spec-only**. The grammar lives in
 `README.md`; an example file is
-[`example.nota`](example.nota). No Rust code.
+`example.nota`. No Rust code.
 
 ## Role in the sema-ecosystem
 
